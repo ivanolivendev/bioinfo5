@@ -1,0 +1,29 @@
+name: Build and Deploy Bioconda with Jupyter
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v0.2.0
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Configure Docker Buildx
+        run: |
+          docker run --rm --privileged docker/binfmt:a7996909642ee92942dcd6cff44b9b95f08dad64
+
+      - name: Build and push Docker image to Google Container Registry (GCR)
+        run: |
+          docker build . --file Dockerfile --tag gcr.io/${{ secrets.GCP_PROJECT_ID }}/nome-da-imagem:tag
+          docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/nome-da-imagem:tag
